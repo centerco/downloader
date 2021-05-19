@@ -11,9 +11,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-public class HttpFileDownloaderTest {
+public class HttpFileDownloaderIntegrationTest {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloaderTest.class);
+    private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloaderIntegrationTest.class);
     private final static List<UUID> threads = new ArrayList<>();
 
     @Test
