@@ -1,4 +1,4 @@
-package org.lineate.downloader;
+package org.lineate.downloader.httpdownloader;
 
 import java.util.Objects;
 

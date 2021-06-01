@@ -1,5 +1,8 @@
-package org.lineate.downloader;
+package org.lineate.downloader.httpdownloader;
 
+import org.lineate.downloader.Downloader;
+import org.lineate.downloader.exceptions.BadUrlException;
+import org.lineate.downloader.exceptions.IllegalUuidException;
 import org.lineate.downloader.progressbar.Progressbar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +18,7 @@ import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,7 +34,18 @@ public class HttpFileDownloader implements Downloader {
     private final static Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
     private final static Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
 
-    private final ExecutorService executor = Executors.newFixedThreadPool(10);
+    private final static String WRONG_UUID_MESSAGE = "Unable to find uuid: ";
+
+    private final ExecutorService executor;
+
+    public HttpFileDownloader(Properties properties) {
+        int nThreads = 10;
+        if(properties != null) {
+            nThreads = (Integer) properties.getOrDefault("threads", 10);
+        }
+
+        executor = Executors.newFixedThreadPool(nThreads);
+    }
 
     @Override
     public UUID create(String sourceUri, String destinationFilePath) {
@@ -53,10 +68,8 @@ public class HttpFileDownloader implements Downloader {
         try {
             return executor.submit(new DownloadTask(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
         } catch (MalformedURLException ex) {
-            ex.printStackTrace();
+            throw new BadUrlException(ex.getLocalizedMessage());
         }
-
-        return null;
 
     }
 
@@ -65,9 +78,11 @@ public class HttpFileDownloader implements Downloader {
         List<DownloadTask> tasks = new ArrayList<>();
         FILES.forEach((id, names) -> {
             try {
+                LOGGER.info("Starting job for id '{}' of total {} jobs, storing '{}' to '{}'", id, FILES.size(), names.getSourceUri(), names.getLocalFile());
                 tasks.add(new DownloadTask(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
             } catch (MalformedURLException ex) {
                 ex.printStackTrace();
+                throw new BadUrlException(ex.getLocalizedMessage());
             }
         });
         return executor.invokeAll(tasks);
@@ -81,33 +96,50 @@ public class HttpFileDownloader implements Downloader {
     @Override
     public byte getProgress(UUID uuid) {
         Progressbar progressbar = PROGRESSES.getOrDefault(uuid, null);
-        return null == progressbar ? 0 : progressbar.getPercentage();
+        if(progressbar == null) {
+            throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
+        }
+        return progressbar.getPercentage();
     }
 
     @Override
     public long getProgressBytes(UUID uuid) {
         Progressbar progressbar = PROGRESSES.getOrDefault(uuid, null);
-        return  null == progressbar ? 0 : progressbar.getDownloaded();
+        if(progressbar == null) {
+            throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
+        }
+        return  progressbar.getDownloaded();
     }
 
     @Override
     public String getSource(UUID uuid) {
         if(FILES.containsKey(uuid)) {
-            return FILES.get(uuid).getSourceUri();
+            DownloadData names = FILES.get(uuid);
+            if(names != null) {
+                return FILES.get(uuid).getSourceUri();
+            }
+            throw new IllegalUuidException("No data found for uuid: "+uuid);
         }
-        return null;
+        throw new IllegalUuidException(WRONG_UUID_MESSAGE+uuid);
     }
 
     @Override
     public String getDestination(UUID uuid) {
         if(FILES.containsKey(uuid)) {
-            return FILES.get(uuid).getLocalFile();
+            DownloadData names = FILES.get(uuid);
+            if(names != null) {
+                return FILES.get(uuid).getLocalFile();
+            }
+            throw new IllegalUuidException("No data found for uuid: "+uuid);
         }
-        return null;
+        throw new IllegalUuidException(WRONG_UUID_MESSAGE+uuid);
     }
 
     @Override
     public void close() throws InterruptedException {
+        FILES.clear();
+        PROGRESSES.clear();
+
         executor.shutdown();
         executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         LOGGER.info("Downloader closed.");
