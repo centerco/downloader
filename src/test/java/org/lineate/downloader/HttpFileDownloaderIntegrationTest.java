@@ -79,7 +79,7 @@ public class HttpFileDownloaderIntegrationTest {
             int size = 0;
             UUID id = UUID.fromString(this.id);
             while (!downloader.downloaded(id)) {
-                int newSize = Math.round(downloader.getProgress(id));
+                int newSize = Math.round(downloader.getProgress(id)) / 1024 / 1024;
                 if (newSize > size) {
                     size = newSize;
                     LOGGER.info("Downloaded ~{}MB of {}", size, downloader.getDestination(id));

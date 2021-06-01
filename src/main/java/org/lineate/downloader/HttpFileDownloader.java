@@ -25,7 +25,7 @@ public class HttpFileDownloader implements Downloader {
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloader.class);
 
     private final static Map<UUID, DownloadData> files = new ConcurrentHashMap<>();
-    private final static Map<UUID, Float> progresses = new ConcurrentHashMap<>();
+    private final static Map<UUID, Integer> progresses = new ConcurrentHashMap<>();
 
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
@@ -33,7 +33,7 @@ public class HttpFileDownloader implements Downloader {
     public UUID create(String sourceUri, String destinationFilePath) {
         UUID uuid = UUID.randomUUID();
         files.put(uuid, new DownloadData(sourceUri, destinationFilePath));
-        progresses.put(uuid, 0f);
+        progresses.put(uuid, 0);
         return uuid;
     }
 
@@ -63,8 +63,8 @@ public class HttpFileDownloader implements Downloader {
     }
 
     @Override
-    public float getProgress(UUID uuid) {
-        return progresses.getOrDefault(uuid, 0f);
+    public int getProgress(UUID uuid) {
+        return progresses.getOrDefault(uuid, 0);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class HttpFileDownloader implements Downloader {
 
                 while ((bytesRead = inputStream.read(data)) != -1) {
                     progress += bytesRead;
-                    progresses.replace(uuid, progress / 1024 / 1024f);
+                    progresses.replace(uuid, progress);
                     outputStream.write(data, 0, bytesRead);
                 }
                 files.remove(uuid);
