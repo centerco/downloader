@@ -1,4 +1,4 @@
-package org.lineate.downloader.progressor;
+package org.lineate.downloader.progressbar;
 
 public final class Progressbar {
     private final long size;

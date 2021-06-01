@@ -32,7 +32,7 @@ public class HttpFileDownloaderIntegrationTest {
 
             threads.forEach((id) -> {
                 downloader.download(id);
-                pool.execute(new Task(downloader, id.toString()));
+                pool.execute(new Progress(downloader, id.toString()));
             });
 
             pool.shutdown();
@@ -51,9 +51,9 @@ public class HttpFileDownloaderIntegrationTest {
             UUID id = downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox.zip");
             UUID id2 = downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox1.zip");
             Future<File> result = downloader.download(id);
-            pool.execute(new Task(downloader, id.toString()));
+            pool.execute(new Progress(downloader, id.toString()));
             Future<File> result2 = downloader.download(id2);
-            pool.execute(new Task(downloader, id2.toString()));
+            pool.execute(new Progress(downloader, id2.toString()));
 
             File file1 = result.get();
             File file2 = result2.get();
@@ -72,8 +72,8 @@ public class HttpFileDownloaderIntegrationTest {
 
             UUID id = downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox.zip");
             UUID id2 = downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox1.zip");
-            pool.execute(new Task(downloader, id.toString()));
-            pool.execute(new Task(downloader, id2.toString()));
+            pool.execute(new Progress(downloader, id.toString()));
+            pool.execute(new Progress(downloader, id2.toString()));
             List<Future<File>> result = downloader.downloadAll();
 
             assertEquals(2, result.size());
@@ -88,13 +88,13 @@ public class HttpFileDownloaderIntegrationTest {
         }
     }
 
-    private static final class Task implements Runnable {
+    private static final class Progress implements Runnable {
 
         private final Downloader downloader;
         private final String destination;
         private final UUID id;
 
-        public Task(Downloader downloader, String id) {
+        public Progress(Downloader downloader, String id) {
             this.downloader = downloader;
             this.id = UUID.fromString(id);
             this.destination = downloader.getDestination(this.id);

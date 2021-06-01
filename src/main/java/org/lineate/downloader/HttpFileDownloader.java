@@ -1,6 +1,6 @@
 package org.lineate.downloader;
 
-import org.lineate.downloader.progressor.Progressbar;
+import org.lineate.downloader.progressbar.Progressbar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,23 +27,23 @@ public class HttpFileDownloader implements Downloader {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloader.class);
 
-    private final static Map<UUID, DownloadData> files = new ConcurrentHashMap<>();
-    private final static Map<UUID, Progressbar> progresses = new ConcurrentHashMap<>();
+    private final static Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
+    private final static Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
 
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
     @Override
     public UUID create(String sourceUri, String destinationFilePath) {
         UUID uuid = UUID.randomUUID();
-        files.put(uuid, new DownloadData(sourceUri, destinationFilePath));
-        progresses.put(uuid, new Progressbar(0, 0));
+        FILES.put(uuid, new DownloadData(sourceUri, destinationFilePath));
+        PROGRESSES.put(uuid, new Progressbar(0, 0));
         return uuid;
     }
 
     @Override
     public Future<File> download(UUID id) {
 
-        DownloadData names = files.get(id);
+        DownloadData names = FILES.get(id);
         if(names == null) {
             throw new RuntimeException("Unknown process id '"+id+"'");
         } else {
@@ -51,7 +51,7 @@ public class HttpFileDownloader implements Downloader {
         }
 
         try {
-            return executor.submit(new DownloadCallable(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
+            return executor.submit(new DownloadTask(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
@@ -62,10 +62,10 @@ public class HttpFileDownloader implements Downloader {
 
     @Override
     public List<Future<File>> downloadAll() throws InterruptedException {
-        List<DownloadCallable> tasks = new ArrayList<>();
-        files.forEach((id, names) -> {
+        List<DownloadTask> tasks = new ArrayList<>();
+        FILES.forEach((id, names) -> {
             try {
-                tasks.add(new DownloadCallable(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
+                tasks.add(new DownloadTask(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
             } catch (MalformedURLException ex) {
                 ex.printStackTrace();
             }
@@ -75,33 +75,33 @@ public class HttpFileDownloader implements Downloader {
 
     @Override
     public boolean downloaded(UUID uuid) {
-        return !files.containsKey(uuid);
+        return !FILES.containsKey(uuid);
     }
 
     @Override
     public byte getProgress(UUID uuid) {
-        Progressbar progressbar = progresses.getOrDefault(uuid, null);
+        Progressbar progressbar = PROGRESSES.getOrDefault(uuid, null);
         return null == progressbar ? 0 : progressbar.getPercentage();
     }
 
     @Override
     public long getProgressBytes(UUID uuid) {
-        Progressbar progressbar = progresses.getOrDefault(uuid, null);
+        Progressbar progressbar = PROGRESSES.getOrDefault(uuid, null);
         return  null == progressbar ? 0 : progressbar.getDownloaded();
     }
 
     @Override
     public String getSource(UUID uuid) {
-        if(files.containsKey(uuid)) {
-            return files.get(uuid).getSourceUri();
+        if(FILES.containsKey(uuid)) {
+            return FILES.get(uuid).getSourceUri();
         }
         return null;
     }
 
     @Override
     public String getDestination(UUID uuid) {
-        if(files.containsKey(uuid)) {
-            return files.get(uuid).getLocalFile();
+        if(FILES.containsKey(uuid)) {
+            return FILES.get(uuid).getLocalFile();
         }
         return null;
     }
@@ -113,7 +113,7 @@ public class HttpFileDownloader implements Downloader {
         LOGGER.info("Downloader closed.");
     }
 
-    private static final class DownloadCallable implements Callable<File> {
+    private static final class DownloadTask implements Callable<File> {
 
         private static final int BUFFER_SIZE = 1024 * 1024;
 
@@ -121,7 +121,7 @@ public class HttpFileDownloader implements Downloader {
         private final File destination;
         private final UUID uuid;
 
-        public DownloadCallable(UUID uuid, final URL targetUrl, final File destination) {
+        public DownloadTask(UUID uuid, final URL targetUrl, final File destination) {
             this.uuid = uuid;
             this.targetUrl = targetUrl;
             this.destination = destination;
@@ -129,7 +129,9 @@ public class HttpFileDownloader implements Downloader {
 
         @Override
         public File call() throws IOException {
+
             final URLConnection request = this.targetUrl.openConnection();
+
             try (final InputStream inputStream = request.getInputStream();
                  final FileOutputStream fileStream = new FileOutputStream(this.destination);
                  final BufferedOutputStream outputStream = new BufferedOutputStream(fileStream, BUFFER_SIZE)) {
@@ -141,15 +143,19 @@ public class HttpFileDownloader implements Downloader {
 
                 while ((bytesRead = inputStream.read(data)) != -1) {
                     progress += bytesRead;
-                    progresses.replace(uuid, new Progressbar(targetSize, progress));
+                    PROGRESSES.replace(uuid, new Progressbar(targetSize, progress));
                     outputStream.write(data, 0, bytesRead);
                 }
-                files.remove(uuid);
-                progresses.remove(uuid);
+
+                FILES.remove(uuid);
+                PROGRESSES.remove(uuid);
+
             } catch (IOException exception) {
                 exception.printStackTrace();
             }
+
             return this.destination;
+
         }
     }
 
