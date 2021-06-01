@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class HttpFileDownloader implements Downloader {
@@ -37,7 +38,7 @@ public class HttpFileDownloader implements Downloader {
     }
 
     @Override
-    public void download(UUID id) {
+    public Future<File> download(UUID id) {
 
         DownloadData names = files.get(id);
         if(names == null) {
@@ -47,10 +48,12 @@ public class HttpFileDownloader implements Downloader {
         }
 
         try {
-            executor.submit(new DownloadCallable(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
+            return executor.submit(new DownloadCallable(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
         } catch (MalformedURLException ex) {
             ex.printStackTrace();
         }
+
+        return null;
 
     }
 
