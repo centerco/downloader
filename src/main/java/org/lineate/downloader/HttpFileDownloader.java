@@ -1,5 +1,6 @@
 package org.lineate.downloader;
 
+import org.lineate.downloader.progressor.Progressbar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +26,7 @@ public class HttpFileDownloader implements Downloader {
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloader.class);
 
     private final static Map<UUID, DownloadData> files = new ConcurrentHashMap<>();
-    private final static Map<UUID, Integer> progresses = new ConcurrentHashMap<>();
+    private final static Map<UUID, Progressbar> progresses = new ConcurrentHashMap<>();
 
     private final ExecutorService executor = Executors.newFixedThreadPool(10);
 
@@ -33,7 +34,7 @@ public class HttpFileDownloader implements Downloader {
     public UUID create(String sourceUri, String destinationFilePath) {
         UUID uuid = UUID.randomUUID();
         files.put(uuid, new DownloadData(sourceUri, destinationFilePath));
-        progresses.put(uuid, 0);
+        progresses.put(uuid, new Progressbar(0, 0));
         return uuid;
     }
 
@@ -63,8 +64,15 @@ public class HttpFileDownloader implements Downloader {
     }
 
     @Override
-    public int getProgress(UUID uuid) {
-        return progresses.getOrDefault(uuid, 0);
+    public byte getProgress(UUID uuid) {
+        Progressbar progressbar = progresses.getOrDefault(uuid, null);
+        return null == progressbar ? 0 : progressbar.getPercentage();
+    }
+
+    @Override
+    public long getProgressBytes(UUID uuid) {
+        Progressbar progressbar = progresses.getOrDefault(uuid, null);
+        return  null == progressbar ? 0 : progressbar.getDownloaded();
     }
 
     @Override
@@ -114,10 +122,11 @@ public class HttpFileDownloader implements Downloader {
                 final byte[] data = new byte[10240];
                 int bytesRead;
                 int progress = 0;
+                long targetSize = request.getContentLengthLong();
 
                 while ((bytesRead = inputStream.read(data)) != -1) {
                     progress += bytesRead;
-                    progresses.replace(uuid, progress);
+                    progresses.replace(uuid, new Progressbar(targetSize, progress));
                     outputStream.write(data, 0, bytesRead);
                 }
                 files.remove(uuid);

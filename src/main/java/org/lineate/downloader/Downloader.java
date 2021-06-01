@@ -10,5 +10,6 @@ public interface Downloader extends AutoCloseable {
     String getDestination(UUID id);
     Future<File> download(UUID id);
     boolean downloaded(UUID id);
-    int getProgress(UUID id);
+    byte getProgress(UUID id);
+    long getProgressBytes(UUID id);
 }
