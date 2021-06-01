@@ -67,22 +67,25 @@ public class HttpFileDownloaderIntegrationTest {
     private static final class Task implements Runnable {
 
         private final Downloader downloader;
-        private final String id;
+        private final String destination;
+        private final UUID id;
 
         public Task(Downloader downloader, String id) {
             this.downloader = downloader;
-            this.id = id;
+            this.id = UUID.fromString(id);
+            this.destination = downloader.getDestination(this.id);
         }
 
         @Override
         public void run() {
             int size = 0;
-            UUID id = UUID.fromString(this.id);
             while (!downloader.downloaded(id)) {
-                int newSize = Math.round(downloader.getProgress(id)) / 1024 / 1024;
+                int newSize = Math.round(downloader.getProgress(id));
                 if (newSize > size) {
                     size = newSize;
-                    LOGGER.info("Downloaded ~{}MB of {}", size, downloader.getDestination(id));
+                    if(size % 10 == 0) {
+                        LOGGER.info("Downloaded ~{}% of {}", size, destination);
+                    }
                 }
             }
 

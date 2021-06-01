@@ -12,6 +12,7 @@ public class HttpFileDownloaderUnitTest {
         UUID uuid = downloader.create("Some source", "Some local");
         Assert.assertEquals("Some source", downloader.getSource(uuid));
         Assert.assertEquals("Some local", downloader.getDestination(uuid));
-        Assert.assertEquals(0, downloader.getProgress(uuid), 0.0);
+        Assert.assertEquals(0, downloader.getProgress(uuid));
+        Assert.assertEquals(0, downloader.getProgressBytes(uuid));
     }
 }
