@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class HttpFileDownloaderIntegrationTest {
@@ -56,6 +57,29 @@ public class HttpFileDownloaderIntegrationTest {
 
             File file1 = result.get();
             File file2 = result2.get();
+
+            assertNotNull(file1);
+            LOGGER.info("File1 done. Size: {} bytes", file1.length());
+            assertNotNull(file2);
+            LOGGER.info("File2 done. Size: {} bytes", file2.length());
+        }
+    }
+
+    @Test
+    public void httpFileDownloadAllTestObject() throws Exception {
+        try(Downloader downloader = new HttpFileDownloader()) {
+            ExecutorService pool = Executors.newFixedThreadPool(2);
+
+            UUID id = downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox.zip");
+            UUID id2 = downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox1.zip");
+            pool.execute(new Task(downloader, id.toString()));
+            pool.execute(new Task(downloader, id2.toString()));
+            List<Future<File>> result = downloader.downloadAll();
+
+            assertEquals(2, result.size());
+
+            File file1 = result.get(0).get();
+            File file2 = result.get(1).get();
 
             assertNotNull(file1);
             LOGGER.info("File1 done. Size: {} bytes", file1.length());

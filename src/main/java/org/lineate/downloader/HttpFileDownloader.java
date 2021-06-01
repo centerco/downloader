@@ -12,6 +12,8 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -56,6 +58,19 @@ public class HttpFileDownloader implements Downloader {
 
         return null;
 
+    }
+
+    @Override
+    public List<Future<File>> downloadAll() throws InterruptedException {
+        List<DownloadCallable> tasks = new ArrayList<>();
+        files.forEach((id, names) -> {
+            try {
+                tasks.add(new DownloadCallable(id, new URL(names.getSourceUri()), new File(names.getLocalFile())));
+            } catch (MalformedURLException ex) {
+                ex.printStackTrace();
+            }
+        });
+        return executor.invokeAll(tasks);
     }
 
     @Override
