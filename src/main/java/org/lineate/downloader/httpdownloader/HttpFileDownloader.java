@@ -173,6 +173,8 @@ public class HttpFileDownloader implements Downloader {
                 int progress = 0;
                 long targetSize = request.getContentLengthLong();
 
+                LOGGER.info("Fetching from uri: '{}' to file '{}'", this.targetUrl.getPath(), this.destination.getPath());
+
                 while ((bytesRead = inputStream.read(data)) != -1) {
                     progress += bytesRead;
                     PROGRESSES.replace(uuid, new Progressbar(targetSize, progress));
