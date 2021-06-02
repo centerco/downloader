@@ -76,7 +76,7 @@ public class HttpFileDownloader implements Downloader {
 
         DownloadData names = FILES.get(id);
         if(names == null) {
-            throw new RuntimeException("Unknown process id '"+id+"'");
+            throw new BadUrlException("Unknown process id '"+id+"'");
         } else {
             LOGGER.info("Downloading '{}' into '{}'", names.getSourceUri(), names.getLocalFile());
         }
@@ -167,8 +167,11 @@ public class HttpFileDownloader implements Downloader {
         PROGRESSES.clear();
 
         executor.shutdown();
-        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
-        LOGGER.info("Downloader closed.");
+        if(!executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS)) {
+            throw new RuntimeException("Thread pool termination error.");
+        } else {
+            LOGGER.info("Downloader closed.");
+        }
     }
 
     private static final class DownloadTask implements Callable<File> {
@@ -210,7 +213,7 @@ public class HttpFileDownloader implements Downloader {
                 FILES.remove(uuid);
                 PROGRESSES.replace(uuid, new Progressbar(targetSize, progress, DownloadStatus.FINISHED));
 
-            } catch (IOException exception) {
+            } catch (Exception exception) {
                 PROGRESSES.replace(uuid, new Progressbar(0, 0, DownloadStatus.FAILED));
                 exception.printStackTrace();
             }
