@@ -16,6 +16,8 @@ public interface Downloader extends AutoCloseable {
     Future<File> download(UUID id);
     List<Future<File>> downloadAll() throws InterruptedException;
     boolean downloaded(UUID id);
+    boolean downloading(UUID id);
+    boolean failed(UUID id);
     byte getProgress(UUID id);
     long getProgressBytes(UUID id);
 }
