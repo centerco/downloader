@@ -6,7 +6,7 @@
 
   <groupId>org.lineate</groupId>
   <artifactId>downloader</artifactId>
-  <version>1.0</version>
+  <version>1.0.1</version>
 
   <name>downloader</name>
   <url>https://github.com/centerco/downloader</url>
