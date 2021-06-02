@@ -46,7 +46,9 @@ public class HttpFileDownloaderIntegrationTest {
             });
 
             pool.shutdown();
-            pool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            if(!pool.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS)) {
+                throw new RuntimeException("Thread pool termination error.");
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -114,7 +116,7 @@ public class HttpFileDownloaderIntegrationTest {
     @Test(expected = BadUrlException.class)
     public void httpFileDownloadAllFailMalformedUri() throws Exception {
         try(Downloader downloader = new HttpFileDownloader(null)) {
-            UUID id = downloader.create(null, "Some file");
+            downloader.create(null, "Some file");
             downloader.downloadAll();
         }
     }

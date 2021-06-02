@@ -2,6 +2,7 @@ package org.lineate.downloader;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.lineate.downloader.exceptions.BadUrlException;
 import org.lineate.downloader.exceptions.IllegalUuidException;
 import org.lineate.downloader.httpdownloader.HttpFileDownloader;
 import org.lineate.downloader.progressbar.DownloadStatus;
@@ -67,6 +68,15 @@ public class HttpFileDownloaderUnitTest {
             UUID uuid = downloader.create("Some source", "Some local");
             Assert.assertNotNull(uuid);
             downloader.getStatus(UUID.randomUUID());
+        }
+    }
+
+    @Test(expected = BadUrlException.class)
+    public void testRemove() throws Exception {
+        try(Downloader downloader = new HttpFileDownloader(null)) {
+            UUID id = downloader.create("Some source", "Some local");
+            downloader.remove(id);
+            downloader.download(id);
         }
     }
 }
