@@ -3,6 +3,7 @@ package org.lineate.downloader.httpdownloader;
 import org.lineate.downloader.Downloader;
 import org.lineate.downloader.exceptions.BadUrlException;
 import org.lineate.downloader.exceptions.IllegalUuidException;
+import org.lineate.downloader.progressbar.DownloadStatus;
 import org.lineate.downloader.progressbar.Progressbar;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +52,23 @@ public class HttpFileDownloader implements Downloader {
     public UUID create(String sourceUri, String destinationFilePath) {
         UUID uuid = UUID.randomUUID();
         FILES.put(uuid, new DownloadData(sourceUri, destinationFilePath));
-        PROGRESSES.put(uuid, new Progressbar(0, 0));
+        PROGRESSES.put(uuid, new Progressbar(0, 0, DownloadStatus.NOT_STARTED));
         return uuid;
+    }
+
+    @Override
+    public void remove(UUID id) {
+        FILES.remove(id);
+        PROGRESSES.remove(id);
+    }
+
+    @Override
+    public DownloadStatus getStatus(UUID id) {
+        Progressbar progress = PROGRESSES.get(id);
+        if(progress == null) {
+            throw new IllegalUuidException(WRONG_UUID_MESSAGE + id);
+        }
+        return progress.getStatus();
     }
 
     @Override
@@ -90,7 +106,7 @@ public class HttpFileDownloader implements Downloader {
 
     @Override
     public boolean downloaded(UUID uuid) {
-        return !FILES.containsKey(uuid);
+        return PROGRESSES.get(uuid).getStatus() == DownloadStatus.FINISHED;
     }
 
     @Override
@@ -173,16 +189,19 @@ public class HttpFileDownloader implements Downloader {
                 int progress = 0;
                 long targetSize = request.getContentLengthLong();
 
+                LOGGER.info("Fetching from uri: '{}' to file '{}'", this.targetUrl.getPath(), this.destination.getPath());
+
                 while ((bytesRead = inputStream.read(data)) != -1) {
                     progress += bytesRead;
-                    PROGRESSES.replace(uuid, new Progressbar(targetSize, progress));
+                    PROGRESSES.replace(uuid, new Progressbar(targetSize, progress, DownloadStatus.DOWNLOADING));
                     outputStream.write(data, 0, bytesRead);
                 }
 
                 FILES.remove(uuid);
-                PROGRESSES.remove(uuid);
+                PROGRESSES.replace(uuid, new Progressbar(targetSize, progress, DownloadStatus.FINISHED));
 
             } catch (IOException exception) {
+                PROGRESSES.replace(uuid, new Progressbar(0, 0, DownloadStatus.FAILED));
                 exception.printStackTrace();
             }
 
