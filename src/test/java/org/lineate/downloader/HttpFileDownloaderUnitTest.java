@@ -20,6 +20,8 @@ public class HttpFileDownloaderUnitTest {
             Assert.assertEquals(0, downloader.getProgressBytes(uuid));
             Assert.assertEquals(DownloadStatus.NOT_STARTED, downloader.getStatus(uuid));
             Assert.assertFalse(downloader.downloaded(uuid));
+            Assert.assertFalse(downloader.downloading(uuid));
+            Assert.assertFalse(downloader.failed(uuid));
         }
     }
 

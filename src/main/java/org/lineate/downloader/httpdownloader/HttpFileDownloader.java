@@ -110,6 +110,16 @@ public class HttpFileDownloader implements Downloader {
     }
 
     @Override
+    public boolean downloading(UUID uuid) {
+        return PROGRESSES.get(uuid).getStatus() == DownloadStatus.DOWNLOADING;
+    }
+
+    @Override
+    public boolean failed(UUID uuid) {
+        return PROGRESSES.get(uuid).getStatus() == DownloadStatus.FAILED;
+    }
+
+    @Override
     public byte getProgress(UUID uuid) {
         Progressbar progressbar = PROGRESSES.getOrDefault(uuid, null);
         if(progressbar == null) {
