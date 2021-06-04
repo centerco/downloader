@@ -35,7 +35,7 @@ public class HttpFileDownloaderIntegrationTest {
         try(Downloader downloader = new HttpFileDownloader(properties)) {
             List<UUID> threads = new ArrayList<>();
             for(int i=0; i<12; i++) {
-                threads.add(downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox"+i+".html"));
+                threads.add(downloader.create("https://apache-mirror.rbc.ru/pub/apache/kafka/2.8.0/kafka-2.8.0-src.tgz ", "target/kafka"+i+".tgz"));
             }
 
             ExecutorService pool = Executors.newFixedThreadPool(totalThreads);
