@@ -1,7 +1,6 @@
-package org.lineate.downloader;
+package org.lineate.downloader.httpdownloader;
 
 import org.junit.Test;
-import org.lineate.downloader.httpdownloader.DownloadData;
 
 import static org.junit.Assert.assertEquals;
 

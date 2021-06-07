@@ -1,8 +1,8 @@
-package org.lineate.downloader;
+package org.lineate.downloader.httpdownloader;
 
 import org.junit.Test;
+import org.lineate.downloader.Downloader;
 import org.lineate.downloader.exceptions.BadUrlException;
-import org.lineate.downloader.httpdownloader.HttpFileDownloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
