@@ -1,6 +1,6 @@
 package org.lineate.downloader.httpdownloader;
 
-import org.lineate.downloader.DownloaderReactive;
+import org.lineate.downloader.Downloader;
 import org.lineate.downloader.exceptions.IllegalUuidException;
 import org.lineate.downloader.progressbar.DownloadStatus;
 import org.lineate.downloader.progressbar.Progressbar;
@@ -26,7 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class HttpFileDownloaderReactive implements DownloaderReactive {
+public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>, Flux<Future<File>>> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloaderReactive.class);
 
@@ -55,6 +55,21 @@ public class HttpFileDownloaderReactive implements DownloaderReactive {
     }
 
     @Override
+    public void remove(UUID id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public DownloadStatus getStatus(UUID id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getSource(UUID id) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public Mono<Future<File>> download(UUID id) {
         return Mono.just(get(id));
     }
@@ -67,8 +82,28 @@ public class HttpFileDownloaderReactive implements DownloaderReactive {
     }
 
     @Override
+    public boolean downloaded(UUID id) {
+        return false;
+    }
+
+    @Override
+    public boolean downloading(UUID id) {
+        return false;
+    }
+
+    @Override
+    public boolean failed(UUID id) {
+        return false;
+    }
+
+    @Override
     public byte getProgress(UUID id) {
         return PROGRESSES.get(id).getPercentage();
+    }
+
+    @Override
+    public long getProgressBytes(UUID id) {
+        return 0;
     }
 
     @Override

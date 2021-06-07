@@ -17,9 +17,11 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -28,7 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class HttpFileDownloader implements Downloader {
+public class HttpFileDownloader implements Downloader<Future<File>, List<Future<File>>> {
 
     private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloader.class);
 
@@ -135,6 +137,11 @@ public class HttpFileDownloader implements Downloader {
             throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
         }
         return  progressbar.getDownloaded();
+    }
+
+    @Override
+    public Set<UUID> getDownloads() {
+        return PROGRESSES.keySet();
     }
 
     @Override
