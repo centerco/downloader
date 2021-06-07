@@ -1,10 +1,10 @@
-package org.lineate.downloader;
+package org.lineate.downloader.httpdownloader;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.lineate.downloader.Downloader;
 import org.lineate.downloader.exceptions.BadUrlException;
 import org.lineate.downloader.exceptions.IllegalUuidException;
-import org.lineate.downloader.httpdownloader.HttpFileDownloader;
 import org.lineate.downloader.progressbar.DownloadStatus;
 
 import java.util.UUID;
