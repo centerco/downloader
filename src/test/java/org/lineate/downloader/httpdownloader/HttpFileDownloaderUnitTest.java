@@ -7,12 +7,15 @@ import org.lineate.downloader.exceptions.BadUrlException;
 import org.lineate.downloader.exceptions.IllegalUuidException;
 import org.lineate.downloader.progressbar.DownloadStatus;
 
+import java.io.File;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Future;
 
 public class HttpFileDownloaderUnitTest {
     @Test
     public void classTest() throws Exception {
-        try (Downloader downloader = new HttpFileDownloader(null)) {
+        try (Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID uuid = downloader.create("Some source", "Some local");
             Assert.assertNotNull(uuid);
             Assert.assertEquals("Some source", downloader.getSource(uuid));
@@ -28,7 +31,7 @@ public class HttpFileDownloaderUnitTest {
 
     @Test(expected = IllegalUuidException.class)
     public void testGetProgressBadUuid() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID uuid = downloader.create("Some source", "Some local");
             Assert.assertNotNull(uuid);
             downloader.getProgress(UUID.randomUUID());
@@ -37,7 +40,7 @@ public class HttpFileDownloaderUnitTest {
 
     @Test(expected = IllegalUuidException.class)
     public void testGetProgressBytesBadUuid() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID uuid = downloader.create("Some source", "Some local");
             Assert.assertNotNull(uuid);
             downloader.getProgressBytes(UUID.randomUUID());
@@ -46,7 +49,7 @@ public class HttpFileDownloaderUnitTest {
 
     @Test(expected = IllegalUuidException.class)
     public void testGetSourceBadUuid() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID uuid = downloader.create("Some source", "Some local");
             Assert.assertNotNull(uuid);
             downloader.getSource(UUID.randomUUID());
@@ -55,7 +58,7 @@ public class HttpFileDownloaderUnitTest {
 
     @Test(expected = IllegalUuidException.class)
     public void testGetDestinationBadUuid() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID uuid = downloader.create("Some source", "Some local");
             Assert.assertNotNull(uuid);
             downloader.getDestination(UUID.randomUUID());
@@ -64,7 +67,7 @@ public class HttpFileDownloaderUnitTest {
 
     @Test(expected = IllegalUuidException.class)
     public void testGetStatusBadUuid() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID uuid = downloader.create("Some source", "Some local");
             Assert.assertNotNull(uuid);
             downloader.getStatus(UUID.randomUUID());
@@ -73,7 +76,7 @@ public class HttpFileDownloaderUnitTest {
 
     @Test(expected = BadUrlException.class)
     public void testRemove() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID id = downloader.create("Some source", "Some local");
             downloader.remove(id);
             downloader.download(id);

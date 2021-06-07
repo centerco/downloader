@@ -1,9 +1,10 @@
 package org.lineate.downloader.httpdownloader;
 
 import org.junit.Test;
-import org.lineate.downloader.DownloaderReactive;
+import org.lineate.downloader.Downloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.ParallelFlux;
 import reactor.core.scheduler.Schedulers;
@@ -30,7 +31,7 @@ public class HttpFileDownloaderReactiveTest {
 
     @Test
     public void testDownloadSingleFile() throws Exception {
-        try(DownloaderReactive downloader = new HttpFileDownloaderReactive(1, false)) {
+        try(Downloader<Mono<Future<File>>, Flux<Future<File>>> downloader = new HttpFileDownloaderReactive(1, false)) {
             UUID id = downloader.create("https://apache-mirror.rbc.ru/pub/apache/kafka/2.8.0/kafka-2.8.0-src.tgz ", "target/kafka20.zip");
 
             Mono<Future<File>> result = downloader.download(id);
@@ -45,7 +46,7 @@ public class HttpFileDownloaderReactiveTest {
 
     @Test
     public void testDownloadAllFiles() {
-        try(DownloaderReactive downloader = new HttpFileDownloaderReactive(3, true)) {
+        try(Downloader<Mono<Future<File>>, Flux<Future<File>>> downloader = new HttpFileDownloaderReactive(3, true)) {
 
             downloader.create("https://apache-mirror.rbc.ru/pub/apache/kafka/2.8.0/kafka-2.8.0-src.tgz ", "target/kafka.zip");
             downloader.create("https://apache-mirror.rbc.ru/pub/apache/kafka/2.8.0/kafka-2.8.0-src.tgz ", "target/kafka1.zip");
@@ -97,9 +98,9 @@ public class HttpFileDownloaderReactiveTest {
         private final Set<UUID> downloads;
         private final Map<UUID, Byte> progresses = new HashMap<>();
         private final Map<UUID, String> files = new HashMap<>();
-        private final DownloaderReactive downloaderReactive;
+        private final Downloader<Mono<Future<File>>, Flux<Future<File>>> downloaderReactive;
 
-        public DownloadMonitor(DownloaderReactive downloader) {
+        public DownloadMonitor(Downloader<Mono<Future<File>>, Flux<Future<File>>> downloader) {
             this.downloads = downloader.getDownloads();
             this.downloaderReactive = downloader;
             downloads.forEach((v) -> {

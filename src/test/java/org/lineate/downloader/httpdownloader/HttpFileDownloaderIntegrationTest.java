@@ -32,7 +32,7 @@ public class HttpFileDownloaderIntegrationTest {
             put("threads", totalThreads);
         }};
 
-        try(Downloader downloader = new HttpFileDownloader(properties)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(properties)) {
             List<UUID> threads = new ArrayList<>();
             for(int i=0; i<12; i++) {
                 threads.add(downloader.create("https://apache-mirror.rbc.ru/pub/apache/kafka/2.8.0/kafka-2.8.0-src.tgz ", "target/kafka"+i+".tgz"));
@@ -57,7 +57,7 @@ public class HttpFileDownloaderIntegrationTest {
 
     @Test
     public void httpFileDownloaderTestObject() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             ExecutorService pool = Executors.newFixedThreadPool(2);
 
             UUID id = downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox.zip");
@@ -79,7 +79,7 @@ public class HttpFileDownloaderIntegrationTest {
 
     @Test
     public void httpFileDownloadAllTestObject() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
 
             downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox2.zip");
             downloader.create("https://mirror.linux-ia64.org/apache/knox/1.5.0/knox-1.5.0-src.zip", "target/knox3.zip");
@@ -99,7 +99,7 @@ public class HttpFileDownloaderIntegrationTest {
 
     @Test(expected = RuntimeException.class)
     public void httpFileDownloadFailWrongId() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             downloader.create("Some uri", "Some file");
             downloader.download(UUID.randomUUID());
         }
@@ -107,7 +107,7 @@ public class HttpFileDownloaderIntegrationTest {
 
     @Test(expected = BadUrlException.class)
     public void httpFileDownloadFailMalformedUri() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             UUID id = downloader.create(null, "Some file");
             downloader.download(id);
         }
@@ -115,7 +115,7 @@ public class HttpFileDownloaderIntegrationTest {
 
     @Test(expected = BadUrlException.class)
     public void httpFileDownloadAllFailMalformedUri() throws Exception {
-        try(Downloader downloader = new HttpFileDownloader(null)) {
+        try(Downloader<Future<File>, List<Future<File>>> downloader = new HttpFileDownloader(null)) {
             downloader.create(null, "Some file");
             downloader.downloadAll();
         }
@@ -123,11 +123,11 @@ public class HttpFileDownloaderIntegrationTest {
 
     private static final class Progress implements Runnable {
 
-        private final Downloader downloader;
+        private final Downloader<Future<File>, List<Future<File>>> downloader;
         private final String destination;
         private final UUID id;
 
-        public Progress(Downloader downloader, String id) {
+        public Progress(Downloader<Future<File>, List<Future<File>>> downloader, String id) {
             this.downloader = downloader;
             this.id = UUID.fromString(id);
             this.destination = downloader.getDestination(this.id);
