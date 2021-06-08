@@ -34,13 +34,13 @@ public final class Progressbar {
      * Progressbar is a container for storing current download status.
      *
      * @param size size of the downloading file
-     * @param downloaded downloaded size in bytes
+     * @param downloadedValue downloaded size in bytes
      * @param downloadStatus current download status
      */
-    public Progressbar(final long size, final long downloaded,
+    public Progressbar(final long size, final long downloadedValue,
                        final DownloadStatus downloadStatus) {
 
-        this.downloaded = downloaded;
+        this.downloaded = downloadedValue;
         percentage = size == 0 ? 0 : FULL_LOAD * this.downloaded / size;
 
         status = downloadStatus;
