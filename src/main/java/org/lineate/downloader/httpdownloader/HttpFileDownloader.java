@@ -35,8 +35,8 @@ public final class HttpFileDownloader implements Downloader<Future<File>, List<F
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloader.class);
 
-    private static final Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
-    private static final Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
+    private final Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
+    private final Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
 
     private static final String WRONG_UUID_MESSAGE = "Unable to find uuid: ";
 
@@ -182,7 +182,7 @@ public final class HttpFileDownloader implements Downloader<Future<File>, List<F
         }
     }
 
-    private static final class DownloadTask implements Callable<File> {
+    private final class DownloadTask implements Callable<File> {
 
         private static final int BUFFER_SIZE = 1024 * 1024;
         private static final int BLOCK_SIZE = 10240;

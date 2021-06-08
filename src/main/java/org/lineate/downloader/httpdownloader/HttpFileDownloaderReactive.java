@@ -32,8 +32,8 @@ public final class HttpFileDownloaderReactive implements Downloader<Mono<Future<
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloaderReactive.class);
 
-    private static final Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
-    private static final Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
+    private final Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
+    private final Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
 
     private final ExecutorService downloadPool;
     private final boolean verbose;
@@ -150,7 +150,7 @@ public final class HttpFileDownloaderReactive implements Downloader<Mono<Future<
         }
     }
 
-    private static final class DownloadTask implements Callable<File> {
+    private final class DownloadTask implements Callable<File> {
 
         private static final int BUFFER_SIZE = 1024 * 1024;
         private static final int BLOCK_SIZE = 10240;
