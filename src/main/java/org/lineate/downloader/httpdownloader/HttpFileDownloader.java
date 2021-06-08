@@ -17,7 +17,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -30,28 +29,30 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class HttpFileDownloader implements Downloader<Future<File>, List<Future<File>>> {
+public final class HttpFileDownloader implements Downloader<Future<File>, List<Future<File>>> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloader.class);
+    private static final int THREADS_BY_DEFAULT = 10;
 
-    private final static Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
-    private final static Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloader.class);
 
-    private final static String WRONG_UUID_MESSAGE = "Unable to find uuid: ";
+    private static final Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
+    private static final Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
+
+    private static final String WRONG_UUID_MESSAGE = "Unable to find uuid: ";
 
     private final ExecutorService executor;
 
-    public HttpFileDownloader(Properties properties) {
-        int nThreads = 10;
-        if(properties != null) {
-            nThreads = (Integer) properties.getOrDefault("threads", 10);
+    public HttpFileDownloader(final Properties properties) {
+        int nThreads = THREADS_BY_DEFAULT;
+        if (properties != null) {
+            nThreads = (Integer) properties.getOrDefault("threads", THREADS_BY_DEFAULT);
         }
 
         executor = Executors.newFixedThreadPool(nThreads);
     }
 
     @Override
-    public UUID create(String sourceUri, String destinationFilePath) {
+    public UUID create(final String sourceUri, final String destinationFilePath) {
         UUID uuid = UUID.randomUUID();
         FILES.put(uuid, new DownloadData(sourceUri, destinationFilePath));
         PROGRESSES.put(uuid, new Progressbar(0, 0, DownloadStatus.NOT_STARTED));
@@ -59,26 +60,26 @@ public class HttpFileDownloader implements Downloader<Future<File>, List<Future<
     }
 
     @Override
-    public void remove(UUID id) {
+    public void remove(final UUID id) {
         FILES.remove(id);
         PROGRESSES.remove(id);
     }
 
     @Override
-    public DownloadStatus getStatus(UUID id) {
+    public DownloadStatus getStatus(final UUID id) {
         Progressbar progress = PROGRESSES.get(id);
-        if(progress == null) {
+        if (progress == null) {
             throw new IllegalUuidException(WRONG_UUID_MESSAGE + id);
         }
         return progress.getStatus();
     }
 
     @Override
-    public Future<File> download(UUID id) {
+    public Future<File> download(final UUID id) {
 
         DownloadData names = FILES.get(id);
-        if(names == null) {
-            throw new BadUrlException("Unknown process id '"+id+"'");
+        if (names == null) {
+            throw new BadUrlException("Unknown process id '" + id + "'");
         } else {
             LOGGER.info("Downloading '{}' into '{}'", names.getSourceUri(), names.getLocalFile());
         }
@@ -107,33 +108,33 @@ public class HttpFileDownloader implements Downloader<Future<File>, List<Future<
     }
 
     @Override
-    public boolean downloaded(UUID uuid) {
+    public boolean downloaded(final UUID uuid) {
         return PROGRESSES.get(uuid).getStatus() == DownloadStatus.FINISHED;
     }
 
     @Override
-    public boolean downloading(UUID uuid) {
+    public boolean downloading(final UUID uuid) {
         return PROGRESSES.get(uuid).getStatus() == DownloadStatus.DOWNLOADING;
     }
 
     @Override
-    public boolean failed(UUID uuid) {
+    public boolean failed(final UUID uuid) {
         return PROGRESSES.get(uuid).getStatus() == DownloadStatus.FAILED;
     }
 
     @Override
-    public byte getProgress(UUID uuid) {
+    public byte getProgress(final UUID uuid) {
         Progressbar progressbar = PROGRESSES.getOrDefault(uuid, null);
-        if(progressbar == null) {
+        if (progressbar == null) {
             throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
         }
         return progressbar.getPercentage();
     }
 
     @Override
-    public long getProgressBytes(UUID uuid) {
+    public long getProgressBytes(final UUID uuid) {
         Progressbar progressbar = PROGRESSES.getOrDefault(uuid, null);
-        if(progressbar == null) {
+        if (progressbar == null) {
             throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
         }
         return  progressbar.getDownloaded();
@@ -145,27 +146,27 @@ public class HttpFileDownloader implements Downloader<Future<File>, List<Future<
     }
 
     @Override
-    public String getSource(UUID uuid) {
-        if(FILES.containsKey(uuid)) {
+    public String getSource(final UUID uuid) {
+        if (FILES.containsKey(uuid)) {
             DownloadData names = FILES.get(uuid);
-            if(names != null) {
+            if (names != null) {
                 return FILES.get(uuid).getSourceUri();
             }
-            throw new IllegalUuidException("No data found for uuid: "+uuid);
+            throw new IllegalUuidException("No data found for uuid: " + uuid);
         }
-        throw new IllegalUuidException(WRONG_UUID_MESSAGE+uuid);
+        throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
     }
 
     @Override
-    public String getDestination(UUID uuid) {
-        if(FILES.containsKey(uuid)) {
+    public String getDestination(final UUID uuid) {
+        if (FILES.containsKey(uuid)) {
             DownloadData names = FILES.get(uuid);
-            if(names != null) {
+            if (names != null) {
                 return FILES.get(uuid).getLocalFile();
             }
-            throw new IllegalUuidException("No data found for uuid: "+uuid);
+            throw new IllegalUuidException("No data found for uuid: " + uuid);
         }
-        throw new IllegalUuidException(WRONG_UUID_MESSAGE+uuid);
+        throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
     }
 
     @Override
@@ -174,7 +175,7 @@ public class HttpFileDownloader implements Downloader<Future<File>, List<Future<
         PROGRESSES.clear();
 
         executor.shutdown();
-        if(!executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS)) {
+        if (!executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException("Thread pool termination error.");
         } else {
             LOGGER.info("Downloader closed.");
@@ -184,12 +185,15 @@ public class HttpFileDownloader implements Downloader<Future<File>, List<Future<
     private static final class DownloadTask implements Callable<File> {
 
         private static final int BUFFER_SIZE = 1024 * 1024;
+        private static final int BLOCK_SIZE = 10240;
 
         private final URL targetUrl;
         private final File destination;
         private final UUID uuid;
 
-        public DownloadTask(UUID uuid, final URL targetUrl, final File destination) {
+        DownloadTask(final UUID uuid,
+                     final URL targetUrl,
+                     final File destination) {
             this.uuid = uuid;
             this.targetUrl = targetUrl;
             this.destination = destination;
@@ -200,11 +204,11 @@ public class HttpFileDownloader implements Downloader<Future<File>, List<Future<
 
             final URLConnection request = this.targetUrl.openConnection();
 
-            try (final InputStream inputStream = request.getInputStream();
-                 final FileOutputStream fileStream = new FileOutputStream(this.destination);
-                 final BufferedOutputStream outputStream = new BufferedOutputStream(fileStream, BUFFER_SIZE)) {
+            try (InputStream inputStream = request.getInputStream();
+                 FileOutputStream fileStream = new FileOutputStream(this.destination);
+                 BufferedOutputStream outputStream = new BufferedOutputStream(fileStream, BUFFER_SIZE)) {
 
-                final byte[] data = new byte[10240];
+                final byte[] data = new byte[BLOCK_SIZE];
                 int bytesRead;
                 int progress = 0;
                 long targetSize = request.getContentLengthLong();

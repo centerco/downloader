@@ -26,28 +26,27 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>, Flux<Future<File>>> {
+public final class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>, Flux<Future<File>>> {
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloaderReactive.class);
+    private static final int THREADS_BY_DEFAULT = 10;
 
-    private final static Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
-    private final static Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger(HttpFileDownloaderReactive.class);
+
+    private static final Map<UUID, DownloadData> FILES = new ConcurrentHashMap<>();
+    private static final Map<UUID, Progressbar> PROGRESSES = new ConcurrentHashMap<>();
 
     private final ExecutorService downloadPool;
     private final boolean verbose;
 
-    private final static String WRONG_UUID_MESSAGE = "Unable to find uuid: ";
+    private static final String WRONG_UUID_MESSAGE = "Unable to find uuid: ";
 
-    public HttpFileDownloaderReactive(int threads, boolean verbose) {
-        if(threads < 1) {
-            threads = 10;
-        }
-        downloadPool = Executors.newFixedThreadPool(threads);
+    public HttpFileDownloaderReactive(final int threads, final boolean verbose) {
+        downloadPool = Executors.newFixedThreadPool(threads < 1 ? THREADS_BY_DEFAULT : threads);
         this.verbose = verbose;
     }
 
     @Override
-    public UUID create(String sourceUri, String destinationFilePath) {
+    public UUID create(final String sourceUri, final String destinationFilePath) {
         UUID uuid = UUID.randomUUID();
         FILES.put(uuid, new DownloadData(sourceUri, destinationFilePath));
         PROGRESSES.put(uuid, new Progressbar(0, 0, DownloadStatus.NOT_STARTED));
@@ -55,22 +54,22 @@ public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>
     }
 
     @Override
-    public void remove(UUID id) {
+    public void remove(final UUID id) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public DownloadStatus getStatus(UUID id) {
+    public DownloadStatus getStatus(final UUID id) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getSource(UUID id) {
+    public String getSource(final UUID id) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Mono<Future<File>> download(UUID id) {
+    public Mono<Future<File>> download(final UUID id) {
         return Mono.just(get(id));
     }
 
@@ -82,27 +81,27 @@ public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>
     }
 
     @Override
-    public boolean downloaded(UUID id) {
+    public boolean downloaded(final UUID id) {
         return false;
     }
 
     @Override
-    public boolean downloading(UUID id) {
+    public boolean downloading(final UUID id) {
         return false;
     }
 
     @Override
-    public boolean failed(UUID id) {
+    public boolean failed(final UUID id) {
         return false;
     }
 
     @Override
-    public byte getProgress(UUID id) {
+    public byte getProgress(final UUID id) {
         return PROGRESSES.get(id).getPercentage();
     }
 
     @Override
-    public long getProgressBytes(UUID id) {
+    public long getProgressBytes(final UUID id) {
         return 0;
     }
 
@@ -112,15 +111,15 @@ public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>
     }
 
     @Override
-    public String getDestination(UUID uuid) {
-        if(FILES.containsKey(uuid)) {
+    public String getDestination(final UUID uuid) {
+        if (FILES.containsKey(uuid)) {
             DownloadData names = FILES.get(uuid);
-            if(names != null) {
+            if (names != null) {
                 return FILES.get(uuid).getLocalFile();
             }
-            throw new IllegalUuidException("No data found for uuid: "+uuid);
+            throw new IllegalUuidException("No data found for uuid: " + uuid);
         }
-        throw new IllegalUuidException(WRONG_UUID_MESSAGE+uuid);
+        throw new IllegalUuidException(WRONG_UUID_MESSAGE + uuid);
     }
 
     @Override
@@ -140,27 +139,31 @@ public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>
         }
     }
 
-    private Future<File> get(UUID id) {
-        if(verbose) {
+    private Future<File> get(final UUID id) {
+        if (verbose) {
             LOGGER.info("Downloading file '{}'", FILES.get(id).getLocalFile());
         }
         try {
             return downloadPool.submit(new DownloadTask(id, new URL(FILES.get(id).getSourceUri()), new File(FILES.get(id).getLocalFile()), verbose));
         } catch (IOException ex) {
-            throw new RuntimeException("Failed to load file: "+id);
+            throw new RuntimeException("Failed to load file: " + id);
         }
     }
 
     private static final class DownloadTask implements Callable<File> {
 
         private static final int BUFFER_SIZE = 1024 * 1024;
+        private static final int BLOCK_SIZE = 10240;
 
         private final URL targetUrl;
         private final File destination;
         private final UUID uuid;
         private final boolean verbose;
 
-        public DownloadTask(UUID uuid, URL targetUrl, File destination, boolean verbose) {
+        DownloadTask(final UUID uuid,
+                     final URL targetUrl,
+                     final File destination,
+                     final boolean verbose) {
             this.uuid = uuid;
             this.targetUrl = targetUrl;
             this.destination = destination;
@@ -171,16 +174,16 @@ public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>
 
             final URLConnection request = this.targetUrl.openConnection();
 
-            try (final InputStream inputStream = request.getInputStream();
-                 final FileOutputStream fileStream = new FileOutputStream(this.destination);
-                 final BufferedOutputStream outputStream = new BufferedOutputStream(fileStream, BUFFER_SIZE)) {
+            try (InputStream inputStream = request.getInputStream();
+                 FileOutputStream fileStream = new FileOutputStream(this.destination);
+                 BufferedOutputStream outputStream = new BufferedOutputStream(fileStream, BUFFER_SIZE)) {
 
-                final byte[] data = new byte[10240];
+                final byte[] data = new byte[BLOCK_SIZE];
                 int bytesRead;
                 int progress = 0;
                 long targetSize = request.getContentLengthLong();
 
-                if(verbose) {
+                if (verbose) {
                     LOGGER.info("Fetching from uri: '{}' to file '{}'", this.targetUrl.getPath(), this.destination.getPath());
                 }
 
@@ -193,7 +196,7 @@ public class HttpFileDownloaderReactive implements Downloader<Mono<Future<File>>
                 FILES.remove(uuid);
                 PROGRESSES.replace(uuid, new Progressbar(targetSize, progress, DownloadStatus.FINISHED));
 
-                if(verbose) {
+                if (verbose) {
                     LOGGER.info("Fetching for {} completed", this.destination.getPath());
                 }
 
