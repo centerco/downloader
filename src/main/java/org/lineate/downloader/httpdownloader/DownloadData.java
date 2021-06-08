@@ -6,7 +6,7 @@ public final class DownloadData {
     private final String sourceUri;
     private final String localFile;
 
-    public DownloadData(String sourceUri, String destinationFilePath) {
+    public DownloadData(final String sourceUri, final String destinationFilePath) {
         this.sourceUri = sourceUri;
         this.localFile = destinationFilePath;
     }
@@ -20,9 +20,13 @@ public final class DownloadData {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         DownloadData downloadData = (DownloadData) o;
         return Objects.equals(sourceUri, downloadData.sourceUri) && Objects.equals(localFile, downloadData.localFile);
     }

@@ -46,7 +46,7 @@ public class HttpFileDownloaderReactiveTest {
 
     @Test
     public void testDownloadAllFiles() {
-        try(Downloader<Mono<Future<File>>, Flux<Future<File>>> downloader = new HttpFileDownloaderReactive(3, true)) {
+        try(Downloader<Mono<Future<File>>, Flux<Future<File>>> downloader = new HttpFileDownloaderReactive(3, false)) {
 
             downloader.create("https://apache-mirror.rbc.ru/pub/apache/kafka/2.8.0/kafka-2.8.0-src.tgz ", "target/kafka.zip");
             downloader.create("https://apache-mirror.rbc.ru/pub/apache/kafka/2.8.0/kafka-2.8.0-src.tgz ", "target/kafka1.zip");
